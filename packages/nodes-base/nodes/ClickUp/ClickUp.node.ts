@@ -910,6 +910,20 @@ export class ClickUp implements INodeType {
 							}
 							body.custom_fields = customFields;
 						}
+						if (additionalFields.customFieldsUi) {
+							const customFieldsValues = (additionalFields.customFieldsUi as IDataObject)
+								.customFieldsValues as IDataObject[];
+							if (customFieldsValues) {
+								const customFields: IDataObject[] = [];
+								for (const customFieldValue of customFieldsValues) {
+									customFields.push({
+										id: customFieldValue.fieldId,
+										value: customFieldValue.value as string,
+									});
+								}
+								body.custom_fields = customFields;
+							}
+						}
 						if (additionalFields.content) {
 							body.content = additionalFields.content as string;
 						}

@@ -213,6 +213,44 @@ export const taskFields: INodeProperties[] = [
 				default: [],
 			},
 			{
+				displayName: 'Custom Fields',
+				name: 'customFieldsUi',
+				placeholder: 'Add Custom Field',
+				type: 'fixedCollection',
+				typeOptions: {
+					multipleValues: true,
+				},
+				description: 'Add a custom field',
+				default: {},
+				options: [
+					{
+						name: 'customFieldsValues',
+						displayName: 'Custom Field',
+						values: [
+							{
+								displayName: 'Field Name or ID',
+								name: 'fieldId',
+								type: 'options',
+								typeOptions: {
+									loadOptionsMethod: 'getCustomFields',
+								},
+								default: '',
+								description:
+									'The ID of the field to add custom field to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							},
+							{
+								displayName: 'Value',
+								name: 'value',
+								type: 'string',
+								displayOptions: {},
+								default: '',
+								description: 'The value to set on custom field',
+							},
+						],
+					},
+				],
+			},
+			{
 				displayName: 'Custom Fields JSON',
 				name: 'customFieldsJson',
 				type: 'json',
