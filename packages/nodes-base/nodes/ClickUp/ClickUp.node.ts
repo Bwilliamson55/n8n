@@ -379,7 +379,6 @@ export class ClickUp implements INodeType {
 				}
 				return returnData;
 			},
-
 			// Get all the custom fields to display them to user so that he can
 			// select them easily
 			async getCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
@@ -396,7 +395,7 @@ export class ClickUp implements INodeType {
 				}
 				return returnData;
 			},
-
+			// The improved custom field getter - albeit limited to certain types
 			async getCustomFieldsProperties(
 				this: ILoadOptionsFunctions,
 			): Promise<INodePropertyOptions[]> {
@@ -404,9 +403,6 @@ export class ClickUp implements INodeType {
 				const returnData: INodePropertyOptions[] = [];
 				const { fields } = await clickupApiRequest.call(this, 'GET', `/list/${listId}/field`);
 				for (const field of fields) {
-					// const fieldOptions = field.type_config?.options?.map((option: any) => {
-					// 	return { name: option.name, value: option.orderindex, id: option.id };
-					// });
 					if (
 						// specify the types we know we can work with
 						['short_text', 'text', 'drop_down', 'labels', 'email', 'date'].includes(field.type)
@@ -422,7 +418,7 @@ export class ClickUp implements INodeType {
 				}
 				return returnData;
 			},
-
+			// Get values for dropdown and labels fields per field
 			async getFieldSelectValues(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const [id, type] = (this.getCurrentNodeParameter('&fieldKey') as string).split('|');
 				const listId = this.getCurrentNodeParameter('list') as string;
@@ -433,7 +429,6 @@ export class ClickUp implements INodeType {
 					value: `${option.orderindex ?? option.id}`,
 				}));
 			},
-
 			// Get all the available lists to display them to user so that he can
 			// select them easily
 			async getTasks(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
