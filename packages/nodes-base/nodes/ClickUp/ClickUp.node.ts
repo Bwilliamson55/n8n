@@ -397,6 +397,43 @@ export class ClickUp implements INodeType {
 				return returnData;
 			},
 
+			async getCustomFieldsProperties(
+				this: ILoadOptionsFunctions,
+			): Promise<INodePropertyOptions[]> {
+				const listId = this.getCurrentNodeParameter('list') as string;
+				const returnData: INodePropertyOptions[] = [];
+				const { fields } = await clickupApiRequest.call(this, 'GET', `/list/${listId}/field`);
+				for (const field of fields) {
+					// const fieldOptions = field.type_config?.options?.map((option: any) => {
+					// 	return { name: option.name, value: option.orderindex, id: option.id };
+					// });
+					if (
+						// specify the types we know we can work with
+						['short_text', 'text', 'drop_down', 'labels', 'email', 'date'].includes(field.type)
+					) {
+						const fieldName = field.name;
+						const fieldId = field.id;
+						// Set the value to a easily splitable value for type detection
+						returnData.push({
+							name: fieldName,
+							value: `${fieldId}|${field.type}`,
+						});
+					}
+				}
+				return returnData;
+			},
+
+			async getFieldSelectValues(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const [id, type] = (this.getCurrentNodeParameter('&fieldKey') as string).split('|');
+				const listId = this.getCurrentNodeParameter('list') as string;
+				const { fields } = await clickupApiRequest.call(this, 'GET', `/list/${listId}/field`);
+				const field = fields.find((f: any) => f.id == id);
+				return field.type_config?.options.map((option: IDataObject) => ({
+					name: type == 'drop_down' ? option.name : option.label,
+					value: `${option.orderindex ?? option.id}`,
+				}));
+			},
+
 			// Get all the available lists to display them to user so that he can
 			// select them easily
 			async getTasks(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
@@ -898,6 +935,7 @@ export class ClickUp implements INodeType {
 						const listId = this.getNodeParameter('list', i) as string;
 						const name = this.getNodeParameter('name', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const customFieldsUi = this.getNodeParameter('customFieldsUi', i) as IDataObject;
 						const body: ITask = {
 							name,
 						};
@@ -910,17 +948,24 @@ export class ClickUp implements INodeType {
 							}
 							body.custom_fields = customFields;
 						}
-						if (additionalFields.customFieldsUi) {
-							const customFieldsValues = (additionalFields.customFieldsUi as IDataObject)
+						if (customFieldsUi) {
+							const customFieldsValues = (customFieldsUi as IDataObject)
 								.customFieldsValues as IDataObject[];
 							if (customFieldsValues) {
 								const customFields: IDataObject[] = [];
 								for (const customFieldValue of customFieldsValues) {
+									let fieldid = customFieldValue?.fieldKey?.toString().split('|')[0];
+									let fieldtype = customFieldValue?.fieldKey?.toString().split('|')[1];
+									let val = customFieldValue.value;
+									if (fieldtype === 'date') {
+										val = new Date(val as string).getTime();
+									}
 									customFields.push({
-										id: customFieldValue.fieldId,
-										value: customFieldValue.value as string,
+										id: fieldid,
+										value: val,
 									});
 								}
+								console.log(customFields);
 								body.custom_fields = customFields;
 							}
 						}

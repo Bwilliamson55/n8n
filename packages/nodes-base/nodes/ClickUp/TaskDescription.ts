@@ -188,6 +188,130 @@ export const taskFields: INodeProperties[] = [
 		description: 'The first name on the task',
 	},
 	{
+		displayName: 'Custom Fields',
+		name: 'customFieldsUi',
+		placeholder: 'Add Custom Field',
+		type: 'fixedCollection',
+		typeOptions: {
+			multipleValues: true,
+		},
+		description: 'Add a custom field',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['create'],
+			},
+		},
+		options: [
+			{
+				name: 'customFieldsValues',
+				displayName: 'Custom Field',
+				values: [
+					{
+						displayName: 'Field Name or ID',
+						name: 'fieldKey',
+						type: 'options',
+						typeOptions: {
+							loadOptionsMethod: 'getCustomFieldsProperties',
+							loadOptionsDependsOn: ['list'],
+						},
+						default: '',
+						description:
+							'The ID of the field to add custom field to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					},
+					{
+						displayName: 'Type',
+						name: 'type',
+						type: 'hidden',
+						default: '={{$parameter["&fieldKey"].split("|")[1]}}',
+					},
+					{
+						displayName: 'Short Text',
+						name: 'value',
+						type: 'string',
+						displayOptions: {
+							show: {
+								type: ['short_text'],
+							},
+						},
+						default: '',
+					},
+					{
+						displayName: 'Long Text',
+						name: 'value',
+						type: 'string',
+						typeOptions: {
+							rows: 4,
+						},
+						displayOptions: {
+							show: {
+								type: ['text'],
+							},
+						},
+						default: '',
+					},
+					{
+						displayName: 'Option Names or IDs',
+						name: 'value',
+						type: 'multiOptions',
+						typeOptions: {
+							loadOptionsMethod: 'getFieldSelectValues',
+						},
+						displayOptions: {
+							show: {
+								type: ['labels'],
+							},
+						},
+						default: [],
+						description:
+							'Name of the options you want to set. Multiples can be defined separated by comma. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					},
+					{
+						displayName: 'Option Name or ID',
+						name: 'value',
+						type: 'options',
+						typeOptions: {
+							loadOptionsMethod: 'getFieldSelectValues',
+						},
+						displayOptions: {
+							show: {
+								type: ['drop_down'],
+							},
+						},
+						default: '',
+						description:
+							'Name of the option you want to set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					},
+					{
+						displayName: 'Email',
+						name: 'value',
+						type: 'string',
+						displayOptions: {
+							show: {
+								type: ['email'],
+							},
+						},
+						default: '',
+						description: 'Email address',
+					},
+					{
+						displayName: 'Date',
+						name: 'value',
+						displayOptions: {
+							show: {
+								type: ['date'],
+							},
+						},
+						type: 'dateTime',
+						default: '',
+						description: 'An ISO 8601 format date, with optional time',
+					},
+				],
+			},
+		],
+	},
+	{
 		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
@@ -211,44 +335,6 @@ export const taskFields: INodeProperties[] = [
 					loadOptionsDependsOn: ['list'],
 				},
 				default: [],
-			},
-			{
-				displayName: 'Custom Fields',
-				name: 'customFieldsUi',
-				placeholder: 'Add Custom Field',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
-				},
-				description: 'Add a custom field',
-				default: {},
-				options: [
-					{
-						name: 'customFieldsValues',
-						displayName: 'Custom Field',
-						values: [
-							{
-								displayName: 'Field Name or ID',
-								name: 'fieldId',
-								type: 'options',
-								typeOptions: {
-									loadOptionsMethod: 'getCustomFields',
-								},
-								default: '',
-								description:
-									'The ID of the field to add custom field to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
-							},
-							{
-								displayName: 'Value',
-								name: 'value',
-								type: 'string',
-								displayOptions: {},
-								default: '',
-								description: 'The value to set on custom field',
-							},
-						],
-					},
-				],
 			},
 			{
 				displayName: 'Custom Fields JSON',
