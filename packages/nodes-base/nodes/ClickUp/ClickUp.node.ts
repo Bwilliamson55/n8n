@@ -416,6 +416,15 @@ export class ClickUp implements INodeType {
 						});
 					}
 				}
+				returnData.sort((a, b) => {
+					if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) {
+						return -1;
+					}
+					if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) {
+						return 1;
+					}
+					return 0;
+				});
 				return returnData;
 			},
 			// Get values for dropdown and labels fields per field
@@ -960,7 +969,6 @@ export class ClickUp implements INodeType {
 										value: val,
 									});
 								}
-								console.log(customFields);
 								body.custom_fields = customFields;
 							}
 						}
