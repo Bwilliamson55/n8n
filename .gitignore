@@ -16,3 +16,5 @@ nodelinter.config.json
 packages/*/package-lock.json
 packages/*/.turbo
 *.swp
+.n8n/database.sqlite
+.n8n/config
