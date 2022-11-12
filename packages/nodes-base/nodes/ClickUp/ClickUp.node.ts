@@ -427,14 +427,25 @@ export class ClickUp implements INodeType {
 				});
 				return returnData;
 			},
-			// Get values for dropdown and labels fields per field
-			async getFieldSelectValues(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+			// Get values for labels fields per field
+			async getFieldMultiSelectValues(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const [id, type] = (this.getCurrentNodeParameter('&fieldKey') as string).split('|');
 				const listId = this.getCurrentNodeParameter('list') as string;
 				const { fields } = await clickupApiRequest.call(this, 'GET', `/list/${listId}/field`);
 				const field = fields.find((f: any) => f.id == id);
 				return field.type_config?.options.map((option: IDataObject) => ({
-					name: type == 'drop_down' ? option.name : option.label,
+					name: option.label,
+					value: `${option.orderindex ?? option.id}`,
+				}));
+			},
+			// Get values for dropdown fields in the mapper
+			async getFieldSelectValues(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const id = this.getCurrentNodeParameter('&fieldKey') as string;
+				const listId = this.getCurrentNodeParameter('list') as string;
+				const { fields } = await clickupApiRequest.call(this, 'GET', `/list/${listId}/field`);
+				const field = fields.find((f: any) => f.id == id);
+				return field.type_config?.options.map((option: IDataObject) => ({
+					name: option.name,
 					value: `${option.orderindex ?? option.id}`,
 				}));
 			},

@@ -256,7 +256,7 @@ export const taskFields: INodeProperties[] = [
 						name: 'value',
 						type: 'multiOptions',
 						typeOptions: {
-							loadOptionsMethod: 'getFieldSelectValues',
+							loadOptionsMethod: 'getFieldMultiSelectValues',
 						},
 						displayOptions: {
 							show: {
@@ -268,20 +268,69 @@ export const taskFields: INodeProperties[] = [
 							'Name of the options you want to set. Multiples can be defined separated by comma. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
 					},
 					{
-						displayName: 'Option Name or ID',
-						name: 'value',
-						type: 'options',
-						typeOptions: {
-							loadOptionsMethod: 'getFieldSelectValues',
-						},
+						displayName: 'When This..',
+						name: 'whenThis',
+						type: 'string',
 						displayOptions: {
 							show: {
 								type: ['drop_down'],
 							},
 						},
 						default: '',
-						description:
-							'Name of the option you want to set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					},
+					{
+						displayName: 'Value Maps',
+						name: 'dropDownMapperUi',
+						placeholder: 'Add Value Map',
+						type: 'fixedCollection',
+						displayOptions: {
+							show: {
+								type: ['drop_down'],
+							},
+						},
+						default: '',
+						typeOptions: {
+							multipleValues: true,
+						},
+						description: 'When this then that mapping system for drop down fields',
+						options: [
+							{
+								name: 'dropDownMapperValues',
+								displayName: 'Add a Value Map',
+								values: [
+									{
+										displayName: 'Says this..',
+										name: 'saysThis',
+										type: 'string',
+										default: '',
+									},
+									{
+										displayName: 'Value Index',
+										name: 'valueIndex',
+										type: 'hidden',
+										default: '={{$parameter.customFieldsUi.customFieldsValues.length - 1}}',
+									},
+									{
+										displayName: 'Field Key',
+										name: 'fieldKey',
+										type: 'hidden',
+										default: '={{$parameter["customFieldsUi"]["customFieldsValues"][$parameter["&valueIndex"]]["fieldKey"].split("|")[0]}}',
+									},
+									{
+										displayName: 'Select this',
+										name: 'value',
+										type: 'options',
+										typeOptions: {
+											loadOptionsMethod: 'getFieldSelectValues',
+											loadOptionsDependsOn: ['fieldKey'],
+										},
+										default: '',
+										description:
+											'Name of the option you want to set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+									},
+								],
+							},
+						],
 					},
 					{
 						displayName: 'Email',
