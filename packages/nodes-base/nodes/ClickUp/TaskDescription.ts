@@ -252,34 +252,59 @@ export const taskFields: INodeProperties[] = [
 						default: '',
 					},
 					{
-						displayName: 'Option Names or IDs',
-						name: 'value',
-						type: 'multiOptions',
-						typeOptions: {
-							loadOptionsMethod: 'getFieldMultiSelectValues',
-						},
-						displayOptions: {
-							show: {
-								type: ['labels'],
-							},
-						},
-						default: [],
-						description:
-							'Name of the options you want to set. Multiples can be defined separated by comma. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
-					},
-					{
 						displayName: 'When This..',
 						name: 'whenThis',
 						type: 'string',
 						displayOptions: {
 							show: {
-								type: ['drop_down'],
+								type: ['drop_down', 'labels'],
 							},
 						},
 						default: '',
 					},
 					{
-						displayName: 'Value Maps',
+						displayName: 'Labels Value Maps',
+						name: 'dropDownMapperUi',
+						placeholder: 'Add Value Map',
+						type: 'fixedCollection',
+						displayOptions: {
+							show: {
+								type: ['labels'],
+							},
+						},
+						default: '',
+						typeOptions: {
+							multipleValues: true,
+						},
+						description: 'When this then that mapping system for drop down fields',
+						options: [
+							{
+								name: 'dropDownMapperValues',
+								displayName: 'Add a Value Map',
+								values: [
+									{
+										displayName: 'Says this..',
+										name: 'saysThis',
+										type: 'string',
+										default: '',
+									},
+									{
+										displayName: 'Select this or these',
+										name: 'value',
+										type: 'multiOptions',
+										typeOptions: {
+											loadOptionsMethod: 'getFieldSelectValues',
+										},
+										default: '',
+										description:
+											'Name of the options you want to set. Multiples can be defined separated by comma. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+									},
+								],
+							},
+						],
+					},
+					{
+						displayName: 'Drop Down Value Maps',
 						name: 'dropDownMapperUi',
 						placeholder: 'Add Value Map',
 						type: 'fixedCollection',
@@ -305,24 +330,11 @@ export const taskFields: INodeProperties[] = [
 										default: '',
 									},
 									{
-										displayName: 'Value Index',
-										name: 'valueIndex',
-										type: 'hidden',
-										default: '={{$parameter.customFieldsUi.customFieldsValues.length - 1}}',
-									},
-									{
-										displayName: 'Field Key',
-										name: 'fieldKey',
-										type: 'hidden',
-										default: '={{$parameter["customFieldsUi"]["customFieldsValues"][$parameter["&valueIndex"]]["fieldKey"].split("|")[0]}}',
-									},
-									{
 										displayName: 'Select this',
 										name: 'value',
 										type: 'options',
 										typeOptions: {
 											loadOptionsMethod: 'getFieldSelectValues',
-											loadOptionsDependsOn: ['fieldKey'],
 										},
 										default: '',
 										description:
