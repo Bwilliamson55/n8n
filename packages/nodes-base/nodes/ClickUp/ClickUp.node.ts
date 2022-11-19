@@ -49,6 +49,8 @@ import { ITask } from './TaskInterface';
 
 import { IList } from './ListInterface';
 
+import { ICustomFieldsUi } from './CustomFieldsUiInterface';
+
 import moment from 'moment-timezone';
 
 export class ClickUp implements INodeType {
@@ -941,7 +943,7 @@ export class ClickUp implements INodeType {
 						const listId = this.getNodeParameter('list', i) as string;
 						const name = this.getNodeParameter('name', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						const customFieldsUi = this.getNodeParameter('customFieldsUi', i) as IDataObject;
+						const customFieldsUi = this.getNodeParameter('customFieldsUi', i) as ICustomFieldsUi;
 						const body: ITask = {
 							name,
 						};
@@ -954,25 +956,40 @@ export class ClickUp implements INodeType {
 							}
 							body.custom_fields = customFields;
 						}
-						if (customFieldsUi) {
-							const customFieldsValues = (customFieldsUi as IDataObject)
-								.customFieldsValues as IDataObject[];
-							if (customFieldsValues) {
-								const customFields: IDataObject[] = [];
-								for (const customFieldValue of customFieldsValues) {
-									let fieldid = customFieldValue?.fieldKey?.toString().split('|')[0];
-									let fieldtype = customFieldValue?.fieldKey?.toString().split('|')[1];
-									let val = customFieldValue.value;
-									if (fieldtype === 'date') {
-										val = new Date(val as string).getTime();
+						if (customFieldsUi.customFieldsValues) {
+							const customFields: IDataObject[] = [];
+							for (let customFieldValue of customFieldsUi.customFieldsValues) {
+								let fieldid = customFieldValue?.fieldKey?.toString().split('|')[0];
+								let fieldtype = customFieldValue?.fieldKey?.toString().split('|')[1];
+								let val = '' as string|number|string[];  //hmm
+
+								if (['drop_down', 'labels'].includes(fieldtype?.toString() ?? '')) {
+									let whenThis = customFieldValue.whenThis?.toString();
+									let vals = customFieldValue.dropDownMapperUi?.dropDownMapperValues?.filter(
+										(mapval) => {return whenThis == mapval.saysThis}
+									);
+									console.log(`yay vals `+JSON.stringify(vals));
+									let valarr = vals?.map( v => v.value )
+									//Drop selection is the id string, labels are an array of id strings
+									if (fieldtype == 'drop_down') {
+										val = valarr?.toString().split(',')[0];
+									} else {
+										val = valarr?.toString().split(',');
 									}
-									customFields.push({
-										id: fieldid,
-										value: val,
-									});
-								}
-								body.custom_fields = customFields;
+									console.log(`yay val `+JSON.stringify(val));
+								} else {
+									console.log('else');
+									let val = customFieldValue.value;
+								};
+								if (fieldtype === 'date') {
+									val = new Date(val as string).getTime(); //hmm
+								};
+								customFields.push({
+									id: fieldid,
+									value: val,
+								});
 							}
+							body.custom_fields = customFields;
 						}
 						if (additionalFields.content) {
 							body.content = additionalFields.content as string;
