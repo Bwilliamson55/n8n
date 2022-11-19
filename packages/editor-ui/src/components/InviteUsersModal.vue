@@ -7,7 +7,7 @@
 		width="460px"
 		:eventBus="modalBus"
 	>
-		<template slot="content">
+		<template #content>
 			<n8n-form-inputs
 				:inputs="config"
 				:eventBus="formBus"
@@ -16,7 +16,7 @@
 				@submit="onSubmit"
 			/>
 		</template>
-		<template slot="footer">
+		<template #footer>
 			<n8n-button :loading="loading" :disabled="!enabledButton" :label="buttonLabel" @click="onSubmitClick" float="right" />
 		</template>
 	</Modal>
@@ -31,7 +31,7 @@ import Modal from "./Modal.vue";
 import Vue from "vue";
 import { IFormInputs, IInviteResponse } from "@/Interface";
 import { VALID_EMAIL_REGEX, INVITE_USER_MODAL_KEY } from "@/constants";
-import { ROLE } from "@/modules/userHelpers";
+import { ROLE } from "@/stores/userHelpers";
 import { mapStores } from "pinia";
 import { useUsersStore } from "@/stores/users";
 

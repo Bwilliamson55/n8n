@@ -13,8 +13,11 @@ _START_PACKAGE
 !.vscode/settings.default.json
 .idea
 nodelinter.config.json
-packages/*/package-lock.json
-packages/*/.turbo
+**/package-lock.json
+packages/**/.turbo
+*.tsbuildinfo
+cypress/videos/*
+cypress/screenshots/*
 *.swp
 .n8n/database.sqlite
 .n8n/config
