@@ -2676,7 +2676,7 @@ export function getLoadOptionsFunctions(
 				options?: IGetNodeParameterOptions,
 			): NodeParameterValueType | object | undefined => {
 				const nodeParameters = additionalData.currentNodeParameters;
-
+				if (parameterPath === '&') { return path };
 				if (parameterPath.charAt(0) === '&') {
 					parameterPath = `${path.split('.').slice(1, -1).join('.')}.${parameterPath.slice(1)}`;
 				}

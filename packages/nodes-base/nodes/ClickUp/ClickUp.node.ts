@@ -49,6 +49,8 @@ import { ITask } from './TaskInterface';
 
 import { IList } from './ListInterface';
 
+import { ICustomFieldsUi } from './CustomFieldsUiInterface';
+
 import moment from 'moment-timezone';
 
 export class ClickUp implements INodeType {
@@ -379,7 +381,6 @@ export class ClickUp implements INodeType {
 				}
 				return returnData;
 			},
-
 			// Get all the custom fields to display them to user so that he can
 			// select them easily
 			async getCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
@@ -396,7 +397,51 @@ export class ClickUp implements INodeType {
 				}
 				return returnData;
 			},
-
+			// The improved custom field getter - albeit limited to certain types
+			async getCustomFieldsProperties(
+				this: ILoadOptionsFunctions,
+			): Promise<INodePropertyOptions[]> {
+				const listId = this.getCurrentNodeParameter('list') as string;
+				const returnData: INodePropertyOptions[] = [];
+				const { fields } = await clickupApiRequest.call(this, 'GET', `/list/${listId}/field`);
+				for (const field of fields) {
+					if (
+						// specify the types we know we can work with
+						['short_text', 'text', 'drop_down', 'labels', 'email', 'date'].includes(field.type)
+					) {
+						const fieldName = field.name;
+						const fieldId = field.id;
+						// Set the value to a easily splitable value for type detection
+						returnData.push({
+							name: fieldName,
+							value: `${fieldId}|${field.type}`,
+						});
+					}
+				}
+				returnData.sort((a, b) => {
+					if (a.name.toLocaleLowerCase() < b.name.toLocaleLowerCase()) {
+						return -1;
+					}
+					if (a.name.toLocaleLowerCase() > b.name.toLocaleLowerCase()) {
+						return 1;
+					}
+					return 0;
+				});
+				return returnData;
+			},
+			// Get values for dropdown or label fields in the mapper
+			async getFieldSelectValues(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const selfPath = this.getCurrentNodeParameter('&') as string;
+				const selfCustomFieldPath = `${selfPath.split('.').slice(1, 3).join('.')}`;
+				const id = (this.getCurrentNodeParameter(`${selfCustomFieldPath}.fieldKey`) as string).split("|")[0];
+				const listId = this.getCurrentNodeParameter('list') as string;
+				const { fields } = await clickupApiRequest.call(this, 'GET', `/list/${listId}/field`);
+				const field = fields.find((f: any) => f.id == id);
+				return field.type_config?.options.map((option: IDataObject) => ({
+					name: `${option.label ?? option.name}`,
+					value: `${option.orderindex ?? option.id}`,
+				}));
+			},
 			// Get all the available lists to display them to user so that he can
 			// select them easily
 			async getTasks(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
@@ -897,7 +942,9 @@ export class ClickUp implements INodeType {
 					if (operation === 'create') {
 						const listId = this.getNodeParameter('list', i) as string;
 						const name = this.getNodeParameter('name', i) as string;
+						const customFieldsUi = this.getNodeParameter('customFieldsUi', i) as ICustomFieldsUi;
 						const additionalFields = this.getNodeParameter('additionalFields', i);
+            
 						const body: ITask = {
 							name,
 						};
@@ -906,6 +953,40 @@ export class ClickUp implements INodeType {
 							if (customFields === undefined) {
 								throw new NodeOperationError(this.getNode(), 'Custom Fields: Invalid JSON', {
 									itemIndex: i,
+								});
+							}
+							body.custom_fields = customFields;
+						}
+						if (customFieldsUi.customFieldsValues) {
+							const customFields: IDataObject[] = [];
+							for (let customFieldValue of customFieldsUi.customFieldsValues) {
+								let fieldid = customFieldValue?.fieldKey?.toString().split('|')[0];
+								let fieldtype = customFieldValue?.fieldKey?.toString().split('|')[1];
+								let val = '' as string|number|string[];
+
+								if (['drop_down', 'labels'].includes(fieldtype?.toString() ?? '')) {
+									let whenThis = customFieldValue.whenThis?.toString();
+									let vals = customFieldValue.dropDownMapperUi?.dropDownMapperValues?.filter(
+										(mapval) => {return whenThis == mapval.saysThis}
+									);
+									let valarr = vals?.map( v => v.value )
+									//Drop down field value is the int-id of the string option,
+									// labels field values are an array of guids for their string options
+									if (fieldtype == 'drop_down') {
+										val = valarr?.toString().split(',')[0] ?? '';
+									} else {
+										// TODO: assert unique values
+										val = valarr?.toString().split(',') ?? [];
+									}
+								} else {
+									val = customFieldValue.value ?? '';
+								};
+								if (fieldtype === 'date') {
+									val = new Date(val as string).getTime();
+								};
+								customFields.push({
+									id: fieldid,
+									value: val,
 								});
 							}
 							body.custom_fields = customFields;

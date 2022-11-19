@@ -188,6 +188,195 @@ export const taskFields: INodeProperties[] = [
 		description: 'The first name on the task',
 	},
 	{
+		displayName: 'Custom Fields',
+		name: 'customFieldsUi',
+		placeholder: 'Add Custom Field',
+		type: 'fixedCollection',
+		typeOptions: {
+			multipleValues: true,
+		},
+		description: 'Add a custom field',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['create'],
+			},
+		},
+		options: [
+			{
+				name: 'customFieldsValues',
+				displayName: 'Custom Field',
+				values: [
+					{
+						displayName: 'Field Name or ID',
+						name: 'fieldKey',
+						type: 'options',
+						typeOptions: {
+							loadOptionsMethod: 'getCustomFieldsProperties',
+							loadOptionsDependsOn: ['list'],
+						},
+						default: '',
+						description:
+							'The ID of the field to add custom field to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					},
+					{
+						displayName: 'Type',
+						name: 'type',
+						type: 'hidden',
+						default: '={{$parameter["&fieldKey"].split("|")[1]}}',
+					},
+					{
+						displayName: 'Short Text',
+						name: 'value',
+						type: 'string',
+						displayOptions: {
+							show: {
+								type: ['short_text'],
+							},
+						},
+						default: '',
+					},
+					{
+						displayName: 'Long Text',
+						name: 'value',
+						type: 'string',
+						typeOptions: {
+							rows: 4,
+						},
+						displayOptions: {
+							show: {
+								type: ['text'],
+							},
+						},
+						default: '',
+					},
+					{
+						displayName: 'When This..',
+						name: 'whenThis',
+						type: 'string',
+						displayOptions: {
+							show: {
+								type: ['drop_down', 'labels'],
+							},
+						},
+						default: '',
+						description:
+							'The value to compare against. Type a value, or specify one using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					},
+					{
+						displayName: 'Labels Field Value Maps',
+						name: 'dropDownMapperUi',
+						placeholder: 'Add Value Map',
+						type: 'fixedCollection',
+						displayOptions: {
+							show: {
+								type: ['labels'],
+							},
+						},
+						default: '',
+						typeOptions: {
+							multipleValues: true,
+						},
+						description: 'Graphical switch statement for label/multi-select fields',
+						options: [
+							{
+								name: 'dropDownMapperValues',
+								displayName: 'Add a Value Map',
+								values: [
+									{
+										displayName: 'Says this..',
+										name: 'saysThis',
+										type: 'string',
+										default: '',
+										description: 'Compare this value with the "When This" field value',
+									},
+									{
+										displayName: 'Select this or these',
+										name: 'value',
+										type: 'multiOptions',
+										typeOptions: {
+											loadOptionsMethod: 'getFieldSelectValues',
+										},
+										default: '',
+										description:
+											'Name of the options you want to set. Multiples can be defined separated by comma. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+									},
+								],
+							},
+						],
+					},
+					{
+						displayName: 'Drop Down Value Maps',
+						name: 'dropDownMapperUi',
+						placeholder: 'Add Value Map',
+						type: 'fixedCollection',
+						displayOptions: {
+							show: {
+								type: ['drop_down'],
+							},
+						},
+						default: '',
+						typeOptions: {
+							multipleValues: true,
+						},
+						description: 'Graphical switch statement for drop down fields',
+						options: [
+							{
+								name: 'dropDownMapperValues',
+								displayName: 'Add a Value Map',
+								values: [
+									{
+										displayName: 'Says this..',
+										name: 'saysThis',
+										type: 'string',
+										default: '',
+										description: 'Compare this value with the "When This" field value',
+									},
+									{
+										displayName: 'Select this',
+										name: 'value',
+										type: 'options',
+										typeOptions: {
+											loadOptionsMethod: 'getFieldSelectValues',
+										},
+										default: '',
+										description:
+											'Name of the option you want to set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+									},
+								],
+							},
+						],
+					},
+					{
+						displayName: 'Email',
+						name: 'value',
+						type: 'string',
+						displayOptions: {
+							show: {
+								type: ['email'],
+							},
+						},
+						default: '',
+						description: 'Email address',
+					},
+					{
+						displayName: 'Date',
+						name: 'value',
+						displayOptions: {
+							show: {
+								type: ['date'],
+							},
+						},
+						type: 'dateTime',
+						default: '',
+						description: 'An ISO 8601 format date, with optional time',
+					},
+				],
+			},
+		],
+	},
+	{
 		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
