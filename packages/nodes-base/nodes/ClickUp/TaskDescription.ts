@@ -261,9 +261,11 @@ export const taskFields: INodeProperties[] = [
 							},
 						},
 						default: '',
+						description:
+							'The value to compare against. Type a value, or specify one using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
 					},
 					{
-						displayName: 'Labels Value Maps',
+						displayName: 'Labels Field Value Maps',
 						name: 'dropDownMapperUi',
 						placeholder: 'Add Value Map',
 						type: 'fixedCollection',
@@ -276,7 +278,7 @@ export const taskFields: INodeProperties[] = [
 						typeOptions: {
 							multipleValues: true,
 						},
-						description: 'When this then that mapping system for drop down fields',
+						description: 'Graphical switch statement for label/multi-select fields',
 						options: [
 							{
 								name: 'dropDownMapperValues',
@@ -287,6 +289,7 @@ export const taskFields: INodeProperties[] = [
 										name: 'saysThis',
 										type: 'string',
 										default: '',
+										description: 'Compare this value with the "When This" field value',
 									},
 									{
 										displayName: 'Select this or these',
@@ -317,7 +320,7 @@ export const taskFields: INodeProperties[] = [
 						typeOptions: {
 							multipleValues: true,
 						},
-						description: 'When this then that mapping system for drop down fields',
+						description: 'Graphical switch statement for drop down fields',
 						options: [
 							{
 								name: 'dropDownMapperValues',
@@ -328,6 +331,7 @@ export const taskFields: INodeProperties[] = [
 										name: 'saysThis',
 										type: 'string',
 										default: '',
+										description: 'Compare this value with the "When This" field value',
 									},
 									{
 										displayName: 'Select this',

@@ -961,28 +961,27 @@ export class ClickUp implements INodeType {
 							for (let customFieldValue of customFieldsUi.customFieldsValues) {
 								let fieldid = customFieldValue?.fieldKey?.toString().split('|')[0];
 								let fieldtype = customFieldValue?.fieldKey?.toString().split('|')[1];
-								let val = '' as string|number|string[];  //hmm
+								let val = '' as string|number|string[];
 
 								if (['drop_down', 'labels'].includes(fieldtype?.toString() ?? '')) {
 									let whenThis = customFieldValue.whenThis?.toString();
 									let vals = customFieldValue.dropDownMapperUi?.dropDownMapperValues?.filter(
 										(mapval) => {return whenThis == mapval.saysThis}
 									);
-									console.log(`yay vals `+JSON.stringify(vals));
 									let valarr = vals?.map( v => v.value )
-									//Drop selection is the id string, labels are an array of id strings
+									//Drop down field value is the int-id of the string option,
+									// labels field values are an array of guids for their string options
 									if (fieldtype == 'drop_down') {
-										val = valarr?.toString().split(',')[0];
+										val = valarr?.toString().split(',')[0] ?? '';
 									} else {
-										val = valarr?.toString().split(',');
+										// TODO: assert unique values
+										val = valarr?.toString().split(',') ?? [];
 									}
-									console.log(`yay val `+JSON.stringify(val));
 								} else {
-									console.log('else');
-									let val = customFieldValue.value;
+									val = customFieldValue.value ?? '';
 								};
 								if (fieldtype === 'date') {
-									val = new Date(val as string).getTime(); //hmm
+									val = new Date(val as string).getTime();
 								};
 								customFields.push({
 									id: fieldid,
