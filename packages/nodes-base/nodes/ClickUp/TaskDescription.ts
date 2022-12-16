@@ -417,9 +417,6 @@ export const taskFields: INodeProperties[] = [
 				displayName: 'Content',
 				name: 'content',
 				type: 'string',
-				typeOptions: {
-					alwaysOpenEditWindow: true,
-				},
 				default: '',
 			},
 			{
@@ -549,9 +546,6 @@ export const taskFields: INodeProperties[] = [
 				displayName: 'Content',
 				name: 'content',
 				type: 'string',
-				typeOptions: {
-					alwaysOpenEditWindow: true,
-				},
 				default: '',
 			},
 			{
