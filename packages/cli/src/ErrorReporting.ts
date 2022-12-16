@@ -14,6 +14,9 @@ export const initErrorHandling = () => {
 		return;
 	}
 
+	// Collect longer stacktraces
+	Error.stackTraceLimit = 50;
+
 	const dsn = config.getEnv('diagnostics.config.sentry.dsn');
 	const { N8N_VERSION: release, ENVIRONMENT: environment } = process.env;
 
@@ -22,9 +25,15 @@ export const initErrorHandling = () => {
 		release,
 		environment,
 		integrations: (integrations) => {
+			integrations = integrations.filter(({ name }) => name !== 'OnUncaughtException');
 			integrations.push(new RewriteFrames({ root: process.cwd() }));
 			return integrations;
 		},
+	});
+
+	process.on('uncaughtException', (error) => {
+		ErrorReporterProxy.error(error);
+		if (error.constructor?.name !== 'AxiosError') throw error;
 	});
 
 	ErrorReporterProxy.init({
