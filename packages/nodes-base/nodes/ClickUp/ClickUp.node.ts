@@ -45,11 +45,11 @@ import { timeEntryTagFields, timeEntryTagOperations } from './TimeEntryTagDescri
 
 import { listFields, listOperations } from './ListDescription';
 
+import type { ICustomFieldsUi } from './CustomFieldsUiInterface';
+
 import { ITask } from './TaskInterface';
 
-import { IList } from './ListInterface';
-
-import { ICustomFieldsUi } from './CustomFieldsUiInterface';
+import type { IList } from './ListInterface';
 
 import moment from 'moment-timezone';
 
@@ -381,6 +381,7 @@ export class ClickUp implements INodeType {
 				}
 				return returnData;
 			},
+
 			// Get all the custom fields to display them to user so that he can
 			// select them easily
 			async getCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
@@ -433,7 +434,9 @@ export class ClickUp implements INodeType {
 			async getFieldSelectValues(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const selfPath = this.getCurrentNodeParameter('&') as string;
 				const selfCustomFieldPath = `${selfPath.split('.').slice(1, 3).join('.')}`;
-				const id = (this.getCurrentNodeParameter(`${selfCustomFieldPath}.fieldKey`) as string).split("|")[0];
+				const id = (
+					this.getCurrentNodeParameter(`${selfCustomFieldPath}.fieldKey`) as string
+				).split('|')[0];
 				const listId = this.getCurrentNodeParameter('list') as string;
 				const { fields } = await clickupApiRequest.call(this, 'GET', `/list/${listId}/field`);
 				const field = fields.find((f: any) => f.id == id);
@@ -944,7 +947,7 @@ export class ClickUp implements INodeType {
 						const name = this.getNodeParameter('name', i) as string;
 						const customFieldsUi = this.getNodeParameter('customFieldsUi', i) as ICustomFieldsUi;
 						const additionalFields = this.getNodeParameter('additionalFields', i);
-            
+
 						const body: ITask = {
 							name,
 						};
@@ -959,17 +962,19 @@ export class ClickUp implements INodeType {
 						}
 						if (customFieldsUi.customFieldsValues) {
 							const customFields: IDataObject[] = [];
-							for (let customFieldValue of customFieldsUi.customFieldsValues) {
-								let fieldid = customFieldValue?.fieldKey?.toString().split('|')[0];
-								let fieldtype = customFieldValue?.fieldKey?.toString().split('|')[1];
-								let val = '' as string|number|string[];
+							for (const customFieldValue of customFieldsUi.customFieldsValues) {
+								const fieldid = customFieldValue?.fieldKey?.toString().split('|')[0];
+								const fieldtype = customFieldValue?.fieldKey?.toString().split('|')[1];
+								let val = '' as string | number | string[];
 
 								if (['drop_down', 'labels'].includes(fieldtype?.toString() ?? '')) {
-									let whenThis = customFieldValue.whenThis?.toString();
-									let vals = customFieldValue.dropDownMapperUi?.dropDownMapperValues?.filter(
-										(mapval) => {return whenThis == mapval.saysThis}
+									const whenThis = customFieldValue.whenThis?.toString();
+									const vals = customFieldValue.dropDownMapperUi?.dropDownMapperValues?.filter(
+										(mapval) => {
+											return whenThis == mapval.saysThis;
+										},
 									);
-									let valarr = vals?.map( v => v.value )
+									const valarr = vals?.map((v) => v.value);
 									//Drop down field value is the int-id of the string option,
 									// labels field values are an array of guids for their string options
 									if (fieldtype == 'drop_down') {
@@ -980,10 +985,10 @@ export class ClickUp implements INodeType {
 									}
 								} else {
 									val = customFieldValue.value ?? '';
-								};
+								}
 								if (fieldtype === 'date') {
 									val = new Date(val as string).getTime();
-								};
+								}
 								customFields.push({
 									id: fieldid,
 									value: val,

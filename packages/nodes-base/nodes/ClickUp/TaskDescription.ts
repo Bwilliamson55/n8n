@@ -274,7 +274,7 @@ export const taskFields: INodeProperties[] = [
 								type: ['labels'],
 							},
 						},
-						default: '',
+						default: {},
 						typeOptions: {
 							multipleValues: true,
 						},
@@ -292,13 +292,13 @@ export const taskFields: INodeProperties[] = [
 										description: 'Compare this value with the "When This" field value',
 									},
 									{
-										displayName: 'Select this or these',
+										displayName: 'Select This or These',
 										name: 'value',
 										type: 'multiOptions',
 										typeOptions: {
 											loadOptionsMethod: 'getFieldSelectValues',
 										},
-										default: '',
+										default: [],
 										description:
 											'Name of the options you want to set. Multiples can be defined separated by comma. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
 									},
@@ -316,7 +316,7 @@ export const taskFields: INodeProperties[] = [
 								type: ['drop_down'],
 							},
 						},
-						default: '',
+						default: {},
 						typeOptions: {
 							multipleValues: true,
 						},
@@ -334,7 +334,7 @@ export const taskFields: INodeProperties[] = [
 										description: 'Compare this value with the "When This" field value',
 									},
 									{
-										displayName: 'Select this',
+										displayName: 'Select This Name or ID',
 										name: 'value',
 										type: 'options',
 										typeOptions: {
