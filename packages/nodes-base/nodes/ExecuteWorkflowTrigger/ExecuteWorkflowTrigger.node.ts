@@ -1,5 +1,5 @@
-import { IExecuteFunctions } from 'n8n-core';
-import { INodeExecutionData, INodeType, INodeTypeDescription } from 'n8n-workflow';
+import type { IExecuteFunctions } from 'n8n-core';
+import type { INodeExecutionData, INodeType, INodeTypeDescription } from 'n8n-workflow';
 
 export class ExecuteWorkflowTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -9,6 +9,7 @@ export class ExecuteWorkflowTrigger implements INodeType {
 		group: ['trigger'],
 		version: 1,
 		description: 'Runs the flow when called by the Execute Workflow node from a different workflow',
+		eventTriggerDescription: '',
 		maxNodes: 1,
 		defaults: {
 			name: 'Execute Workflow Trigger',

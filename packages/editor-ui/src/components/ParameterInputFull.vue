@@ -5,7 +5,7 @@
 		:showTooltip="focused"
 		:showOptions="menuExpanded || focused || forceShowExpression"
 		:bold="false"
-		size="small"
+		:size="label.size"
 		color="text-dark"
 	>
 		<template #options>
@@ -53,7 +53,9 @@
 							:activeDrop="activeDrop"
 							:forceShowExpression="forceShowExpression"
 							:hint="hint"
+							:hide-issues="hideIssues"
 							@valueChanged="valueChanged"
+							@textInput="onTextInput"
 							@focus="onFocus"
 							@blur="onBlur"
 							@drop="onDrop"
@@ -83,7 +85,7 @@ import {
 	isValueExpression,
 } from '@/utils';
 import ParameterInputWrapper from '@/components/ParameterInputWrapper.vue';
-import { INodeParameters, INodeProperties, INodePropertyMode } from 'n8n-workflow';
+import { INodeParameters, INodeProperties, INodePropertyMode, IParameterLabel } from 'n8n-workflow';
 import { BaseTextKey } from '@/plugins/i18n';
 import { mapStores } from 'pinia';
 import { useNDVStore } from '@/stores/ndv';
@@ -102,6 +104,7 @@ export default mixins(showMessage).extend({
 			forceShowExpression: false,
 			dataMappingTooltipButtons: [] as IN8nButton[],
 			mappingTooltipEnabled: false,
+			localStorageMappingFlag: window.localStorage.getItem(LOCAL_STORAGE_MAPPING_FLAG) === 'true',
 		};
 	},
 	props: {
@@ -117,6 +120,10 @@ export default mixins(showMessage).extend({
 			type: Boolean,
 			default: false,
 		},
+		hideIssues: {
+			type: Boolean,
+			default: false,
+		},
 		parameter: {
 			type: Object as PropType<INodeProperties>,
 		},
@@ -125,6 +132,12 @@ export default mixins(showMessage).extend({
 		},
 		value: {
 			type: [Number, String, Boolean, Array, Object] as PropType<INodeParameters>,
+		},
+		label: {
+			type: Object as PropType<IParameterLabel>,
+			default: () => ({
+				size: 'small',
+			}),
 		},
 	},
 	created() {
@@ -175,7 +188,7 @@ export default mixins(showMessage).extend({
 				this.focused &&
 				this.isInputTypeString &&
 				!this.isInputDataEmpty &&
-				window.localStorage.getItem(LOCAL_STORAGE_MAPPING_FLAG) !== 'true'
+				!this.localStorageMappingFlag
 			);
 		},
 	},
@@ -195,6 +208,7 @@ export default mixins(showMessage).extend({
 			if (!this.parameter.noDataExpression) {
 				this.ndvStore.setMappableNDVInputFocus('');
 			}
+			this.$emit('blur');
 		},
 		onMenuExpanded(expanded: boolean) {
 			this.menuExpanded = expanded;
@@ -207,14 +221,42 @@ export default mixins(showMessage).extend({
 		valueChanged(parameterData: IUpdateInformation) {
 			this.$emit('valueChanged', parameterData);
 		},
+		onTextInput(parameterData: IUpdateInformation) {
+			const param = this.$refs.param as Vue | undefined;
+
+			if (isValueExpression(this.parameter, parameterData.value)) {
+				param?.$emit('optionSelected', 'addExpression');
+			}
+		},
 		onDrop(data: string) {
-			this.forceShowExpression = true;
+			const useDataPath = !!this.parameter.requiresDataPath && data.startsWith('{{ $json');
+			if (!useDataPath) {
+				this.forceShowExpression = true;
+			}
 			setTimeout(() => {
 				if (this.node) {
 					const prevValue = this.isResourceLocator ? this.value.value : this.value;
 					let updatedValue: string;
-					if (typeof prevValue === 'string' && prevValue.startsWith('=') && prevValue.length > 1) {
+					if (useDataPath) {
+						const newValue = data
+							.replace('{{ $json', '')
+							.replace(new RegExp('^\\.'), '')
+							.replace(new RegExp('}}$'), '')
+							.trim();
+
+						if (prevValue && this.parameter.requiresDataPath === 'multiple') {
+							updatedValue = `${prevValue}, ${newValue}`;
+						} else {
+							updatedValue = newValue;
+						}
+					} else if (
+						typeof prevValue === 'string' &&
+						prevValue.startsWith('=') &&
+						prevValue.length > 1
+					) {
 						updatedValue = `${prevValue} ${data}`;
+					} else if (prevValue && ['string', 'json'].includes(this.parameter.type)) {
+						updatedValue = prevValue === '=' ? `=${data}` : `=${prevValue} ${data}`;
 					} else {
 						updatedValue = `=${data}`;
 					}
@@ -289,7 +331,7 @@ export default mixins(showMessage).extend({
 			}, 200);
 		},
 		onMappingTooltipDismissed() {
-			window.localStorage.setItem(LOCAL_STORAGE_MAPPING_FLAG, 'true');
+			this.localStorageMappingFlag = true;
 		},
 	},
 	watch: {

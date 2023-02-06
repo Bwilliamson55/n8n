@@ -1,16 +1,18 @@
+import uniq from 'lodash.uniq';
+import type { DirectoryLoader, Types } from 'n8n-core';
 import {
 	CUSTOM_EXTENSION_ENV,
 	UserSettings,
 	CustomDirectoryLoader,
-	DirectoryLoader,
 	PackageDirectoryLoader,
 	LazyPackageDirectoryLoader,
-	Types,
 } from 'n8n-core';
 import type {
+	ICredentialTypes,
 	ILogger,
 	INodesAndCredentials,
 	KnownNodesAndCredentials,
+	INodeTypeDescription,
 	LoadedNodesAndCredentials,
 } from 'n8n-workflow';
 import { LoggerProxy, ErrorReporterProxy as ErrorReporter } from 'n8n-workflow';
@@ -25,10 +27,16 @@ import {
 } from 'fs/promises';
 import path from 'path';
 import config from '@/config';
-import { InstalledPackages } from '@db/entities/InstalledPackages';
-import { InstalledNodes } from '@db/entities/InstalledNodes';
+import type { InstalledPackages } from '@db/entities/InstalledPackages';
+import type { InstalledNodes } from '@db/entities/InstalledNodes';
 import { executeCommand } from '@/CommunityNodes/helpers';
-import { CLI_DIR, GENERATED_STATIC_DIR, RESPONSE_ERROR_MESSAGES } from '@/constants';
+import {
+	CLI_DIR,
+	GENERATED_STATIC_DIR,
+	RESPONSE_ERROR_MESSAGES,
+	CUSTOM_API_CALL_KEY,
+	CUSTOM_API_CALL_NAME,
+} from '@/constants';
 import {
 	persistInstalledPackageData,
 	removePackageFromDatabase,
@@ -45,6 +53,8 @@ export class LoadNodesAndCredentialsClass implements INodesAndCredentials {
 	excludeNodes = config.getEnv('nodes.exclude');
 
 	includeNodes = config.getEnv('nodes.include');
+
+	credentialTypes: ICredentialTypes;
 
 	logger: ILogger;
 
@@ -63,13 +73,27 @@ export class LoadNodesAndCredentialsClass implements INodesAndCredentials {
 		await this.loadNodesFromBasePackages();
 		await this.loadNodesFromDownloadedPackages();
 		await this.loadNodesFromCustomDirectories();
+		this.injectCustomApiCallOptions();
 	}
 
 	async generateTypesForFrontend() {
 		const credentialsOverwrites = CredentialsOverwrites().getAll();
 		for (const credential of this.types.credentials) {
+			const overwrittenProperties = [];
+			this.credentialTypes
+				.getParentTypes(credential.name)
+				.reverse()
+				.map((name) => credentialsOverwrites[name])
+				.forEach((overwrite) => {
+					if (overwrite) overwrittenProperties.push(...Object.keys(overwrite));
+				});
+
 			if (credential.name in credentialsOverwrites) {
-				credential.__overwrittenProperties = Object.keys(credentialsOverwrites[credential.name]);
+				overwrittenProperties.push(...Object.keys(credentialsOverwrites[credential.name]));
+			}
+
+			if (overwrittenProperties.length) {
+				credential.__overwrittenProperties = uniq(overwrittenProperties);
 			}
 		}
 
@@ -125,21 +149,19 @@ export class LoadNodesAndCredentialsClass implements INodesAndCredentials {
 		}
 	}
 
-	async loadNodesFromCustomDirectories(): Promise<void> {
-		// Read nodes and credentials from custom directories
-		const customDirectories = [];
+	getCustomDirectories(): string[] {
+		const customDirectories = [UserSettings.getUserN8nFolderCustomExtensionPath()];
 
-		// Add "custom" folder in user-n8n folder
-		customDirectories.push(UserSettings.getUserN8nFolderCustomExtensionPath());
-
-		// Add folders from special environment variable
 		if (process.env[CUSTOM_EXTENSION_ENV] !== undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const customExtensionFolders = process.env[CUSTOM_EXTENSION_ENV]!.split(';');
+			const customExtensionFolders = process.env[CUSTOM_EXTENSION_ENV].split(';');
 			customDirectories.push(...customExtensionFolders);
 		}
 
-		for (const directory of customDirectories) {
+		return customDirectories;
+	}
+
+	async loadNodesFromCustomDirectories(): Promise<void> {
+		for (const directory of this.getCustomDirectories()) {
 			await this.runDirectoryLoader(CustomDirectoryLoader, directory);
 		}
 	}
@@ -291,6 +313,60 @@ export class LoadNodesAndCredentialsClass implements INodesAndCredentials {
 			} catch (_) {}
 			throw new Error(RESPONSE_ERROR_MESSAGES.PACKAGE_DOES_NOT_CONTAIN_NODES);
 		}
+	}
+
+	/**
+	 * Whether any of the node's credential types may be used to
+	 * make a request from a node other than itself.
+	 */
+	private supportsProxyAuth(description: INodeTypeDescription) {
+		if (!description.credentials) return false;
+
+		return description.credentials.some(({ name }) => {
+			const credType = this.types.credentials.find((t) => t.name === name);
+			if (!credType) {
+				LoggerProxy.warn(
+					`Failed to load Custom API options for the node "${description.name}": Unknown credential name "${name}"`,
+				);
+				return false;
+			}
+			if (credType.authenticate !== undefined) return true;
+
+			return (
+				Array.isArray(credType.extends) &&
+				credType.extends.some((parentType) =>
+					['oAuth2Api', 'googleOAuth2Api', 'oAuth1Api'].includes(parentType),
+				)
+			);
+		});
+	}
+
+	/**
+	 * Inject a `Custom API Call` option into `resource` and `operation`
+	 * parameters in a latest-version node that supports proxy auth.
+	 */
+	private injectCustomApiCallOptions() {
+		this.types.nodes.forEach((node: INodeTypeDescription) => {
+			const isLatestVersion =
+				node.defaultVersion === undefined || node.defaultVersion === node.version;
+
+			if (isLatestVersion) {
+				if (!this.supportsProxyAuth(node)) return;
+
+				node.properties.forEach((p) => {
+					if (
+						['resource', 'operation'].includes(p.name) &&
+						Array.isArray(p.options) &&
+						p.options[p.options.length - 1].name !== CUSTOM_API_CALL_NAME
+					) {
+						p.options.push({
+							name: CUSTOM_API_CALL_NAME,
+							value: CUSTOM_API_CALL_KEY,
+						});
+					}
+				});
+			}
+		});
 	}
 
 	private unloadNodes(installedNodes: InstalledNodes[]): void {
